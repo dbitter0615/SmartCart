@@ -1,13 +1,8 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import GroceryList from "@/components/GroceryList";
+import PriceComparison from "@/components/PriceComparison";
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { GroceryItem } from "@/types";
 
 // Placeholder data
@@ -46,34 +41,19 @@ const Index = () => {
             />
           </div>
           <div className="lg:col-span-2">
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle>Price Comparison</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {items.length > 0 ? (
-                  <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-96">
-                    <h2 className="text-xl font-semibold mb-2">
-                      Ready to Compare!
-                    </h2>
-                    <p className="text-muted-foreground">
-                      Price comparison results for your {items.length} item(s)
-                      will appear here.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-96">
-                    <h2 className="text-xl font-semibold mb-2">
-                      Your SmartCart is Empty
-                    </h2>
-                    <p className="text-muted-foreground">
-                      Add items to your grocery list to see price comparisons
-                      from your favorite stores.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {items.length > 0 ? (
+              <PriceComparison items={items} />
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-96">
+                <h2 className="text-xl font-semibold mb-2">
+                  Your SmartCart is Empty
+                </h2>
+                <p className="text-muted-foreground">
+                  Add items to your grocery list to see price comparisons from
+                  your favorite stores.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>
