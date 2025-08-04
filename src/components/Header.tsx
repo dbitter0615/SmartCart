@@ -2,10 +2,10 @@ import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/contexts/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Import Link
 
 const Header = () => {
-  const { session, isLoading, profile } = useSession(); // Get session, loading state, and profile
+  const { session, isLoading, profile } = useSession();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -22,7 +22,13 @@ const Header = () => {
         <ShoppingCart className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold">SmartCart</h1>
       </div>
-      <div className="flex items-center gap-4">
+      <nav className="flex items-center gap-4">
+        <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+          Grocery List
+        </Link>
+        <Link to="/recipes" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+          Recipes
+        </Link>
         {!isLoading && (
           session ? (
             <>
@@ -39,7 +45,7 @@ const Header = () => {
             </Button>
           )
         )}
-      </div>
+      </nav>
     </header>
   );
 };
