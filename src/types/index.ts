@@ -15,3 +15,9 @@ export interface ProductPrice {
   price: number;
   productName: string; // e.g., "WonderBread Classic White"
 }
+
+export interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+}
