@@ -21,3 +21,13 @@ export interface Profile {
   first_name: string | null;
   last_name: string | null;
 }
+
+export interface Recipe {
+  id?: string; // Optional, as it might not exist until saved to DB
+  created_at?: string; // Optional, as it might not exist until saved to DB
+  user_id?: string | null; // Optional, and nullable for unsaved recipes
+  url: string;
+  title: string | null;
+  ingredients: string[] | null;
+  instructions: string | null;
+}
