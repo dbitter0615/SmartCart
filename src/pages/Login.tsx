@@ -53,6 +53,21 @@ const Login = () => {
                 button_label: 'Sign up',
                 social_provider_text: 'Sign up with {{provider}}',
                 link_text: 'Don\'t have an account? Sign Up',
+                // Add first_name and last_name fields to the signup form
+                additional_signup_fields: [
+                  {
+                    name: 'first_name',
+                    label: 'First Name',
+                    type: 'text',
+                    required: true,
+                  },
+                  {
+                    name: 'last_name',
+                    label: 'Last Name',
+                    type: 'text',
+                    required: false, // Make last name optional
+                  },
+                ],
               },
               forgotten_password: {
                 link_text: 'Forgot your password?',
