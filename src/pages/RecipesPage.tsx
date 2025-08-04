@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import { MadeWithDyad } from '@/components/made-with-dyad';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { useSession } from '@/contexts/SessionContext';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError, showLoading, dismissToast } from '@/utils/toast';
 import { Recipe } from '@/types';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, ExternalLink } from 'lucide-react';
 
 const RecipesPage = () => {
   const navigate = useNavigate();
@@ -19,10 +19,40 @@ const RecipesPage = () => {
   const [extractedRecipe, setExtractedRecipe] = useState<Recipe | null>(null);
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
+  const [isLoadingSavedRecipes, setIsLoadingSavedRecipes] = useState<boolean>(true);
 
   const handleLoginClick = () => {
     navigate('/login');
   };
+
+  const fetchSavedRecipes = async () => {
+    if (!user) {
+      setSavedRecipes([]);
+      setIsLoadingSavedRecipes(false);
+      return;
+    }
+
+    setIsLoadingSavedRecipes(true);
+    const { data, error } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching saved recipes:", error);
+      showError("Failed to load your saved recipes.");
+      setSavedRecipes([]);
+    } else {
+      setSavedRecipes(data as Recipe[]);
+    }
+    setIsLoadingSavedRecipes(false);
+  };
+
+  useEffect(() => {
+    fetchSavedRecipes();
+  }, [user]); // Refetch when user changes (login/logout)
 
   const handleExtractRecipe = async () => {
     if (!recipeUrl.trim()) {
@@ -86,6 +116,7 @@ const RecipesPage = () => {
       showSuccess("Recipe saved successfully!");
       setExtractedRecipe(null); // Clear the extracted recipe after saving
       setRecipeUrl(''); // Clear the URL input
+      fetchSavedRecipes(); // Refresh the list of saved recipes
     } catch (error: any) {
       console.error("Error saving recipe:", error);
       showError(`Failed to save recipe: ${error.message || "Unknown error"}`);
@@ -162,7 +193,69 @@ const RecipesPage = () => {
           </Card>
         )}
 
-        {!session && (
+        {session && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-4">Your Saved Recipes</h2>
+            {isLoadingSavedRecipes ? (
+              <div className="flex items-center justify-center p-8 border-2 border-dashed rounded-lg h-48">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-2 text-muted-foreground">Loading your recipes...</p>
+              </div>
+            ) : savedRecipes.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {savedRecipes.map((recipe) => (
+                  <Card key={recipe.id}>
+                    <CardHeader>
+                      <CardTitle>{recipe.title || "Untitled Recipe"}</CardTitle>
+                      <CardDescription className="flex items-center gap-1">
+                        <a href={recipe.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">
+                          {new URL(recipe.url).hostname}
+                        </a>
+                        <ExternalLink className="h-3 w-3 text-primary" />
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div>
+                          <h4 className="text-md font-semibold mb-1">Ingredients:</h4>
+                          {recipe.ingredients && recipe.ingredients.length > 0 ? (
+                            <ul className="list-disc list-inside text-sm text-muted-foreground max-h-20 overflow-hidden">
+                              {recipe.ingredients.slice(0, 3).map((ingredient, index) => (
+                                <li key={index}>{ingredient}</li>
+                              ))}
+                              {recipe.ingredients.length > 3 && <li>...and more</li>}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No ingredients listed.</p>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="text-md font-semibold mb-1">Instructions:</h4>
+                          {recipe.instructions ? (
+                            <p className="text-sm text-muted-foreground line-clamp-3">{recipe.instructions}</p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No instructions listed.</p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-48">
+                <h2 className="text-xl font-semibold mb-2">
+                  No recipes saved yet!
+                </h2>
+                <p className="text-muted-foreground">
+                  Extract a recipe above and save it to see it here.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!session && !extractedRecipe && (
           <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-96">
             <h2 className="text-xl font-semibold mb-2">
               No recipes saved yet!
@@ -178,17 +271,6 @@ const RecipesPage = () => {
                 Login to save your SmartCart!
               </Button>
             </div>
-          </div>
-        )}
-
-        {session && !extractedRecipe && (
-          <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg h-96">
-            <h2 className="text-xl font-semibold mb-2">
-              Your saved recipes will appear here.
-            </h2>
-            <p className="text-muted-foreground">
-              Extract a recipe above or add one manually.
-            </p>
           </div>
         )}
       </main>
