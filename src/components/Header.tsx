@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client"; // Import supabase cl
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const Header = () => {
-  const { session, isLoading } = useSession(); // Get session and loading state
+  const { session, isLoading, user } = useSession(); // Get session, loading state, and user
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -22,12 +22,17 @@ const Header = () => {
         <ShoppingCart className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold">SmartCart</h1>
       </div>
-      <div>
+      <div className="flex items-center gap-4">
         {!isLoading && ( // Only render button when session loading is complete
           session ? (
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
-            </Button>
+            <>
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {user?.email}
+              </span>
+              <Button variant="outline" onClick={handleLogout}>
+                Logout
+              </Button>
+            </>
           ) : (
             <Button variant="outline" onClick={handleLoginClick}>
               Login
