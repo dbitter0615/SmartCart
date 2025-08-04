@@ -45,26 +45,18 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
         }
       } else if (_event === 'SIGNED_OUT') {
         showSuccess("Successfully logged out!");
-        navigate('/login'); // Redirect to login page if signed out
-      } else if (_event === 'INITIAL_SESSION' && !session) {
-        // If no initial session and not on login page, redirect to login
-        if (location.pathname !== '/login') {
-          navigate('/login');
-        }
+        // No automatic redirect to login on sign out, user can stay on current page
       }
+      // Removed the initial session redirect for unauthenticated users
     });
 
     return () => subscription.unsubscribe();
   }, [navigate, location.pathname]);
 
-  // Handle initial load and subsequent auth state changes for redirects
+  // Keep this effect to redirect authenticated users away from the login page
   useEffect(() => {
-    if (!isLoading) {
-      if (session && location.pathname === '/login') {
-        navigate('/');
-      } else if (!session && location.pathname !== '/login') {
-        navigate('/login');
-      }
+    if (!isLoading && session && location.pathname === '/login') {
+      navigate('/');
     }
   }, [session, isLoading, location.pathname, navigate]);
 
