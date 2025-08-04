@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { GroceryItem } from "@/types";
-import { fetchPriceComparisons, stores } from "@/data/mock";
+import { fetchProductPricesFromSupabase, stores } from "@/lib/data"; // Updated import path
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -28,7 +28,18 @@ interface ProcessedData {
 }
 
 const PriceComparison = ({ items }: PriceComparisonProps) => {
-  const comparisonData = useMemo(() => fetchPriceComparisons(items), [items]);
+  const [comparisonData, setComparisonData] = useState<ProductPrice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPrices = async () => {
+      setIsLoading(true);
+      const data = await fetchProductPricesFromSupabase(items);
+      setComparisonData(data);
+      setIsLoading(false);
+    };
+    loadPrices();
+  }, [items]);
 
   const processedData: ProcessedData = useMemo(() => {
     const data: ProcessedData = {};
@@ -60,19 +71,26 @@ const PriceComparison = ({ items }: PriceComparisonProps) => {
 
   const cheapestStoreId = useMemo(() => {
     if (items.length === 0) return null;
-    return Object.entries(storeTotals).reduce((cheapest, [storeId, total]) => {
+    const validStoreTotals = Object.entries(storeTotals).filter(([, total]) => total > 0);
+    if (validStoreTotals.length === 0) return null;
+
+    return validStoreTotals.reduce((cheapest, [storeId, total]) => {
       if (total < storeTotals[cheapest]) {
         return storeId;
       }
       return cheapest;
-    }, stores[0].id);
+    }, validStoreTotals[0][0]);
   }, [storeTotals, items]);
 
-  const findCheapestPriceForItem = (itemPrices: ProcessedData[string]) => {
-    if (!itemPrices || Object.keys(itemPrices).length === 0) return null;
-    const prices = Object.values(itemPrices).map(p => p.price);
-    return Math.min(...prices);
-  };
+  if (isLoading) {
+    return (
+      <Card className="h-full flex items-center justify-center">
+        <CardContent className="text-center">
+          <p className="text-muted-foreground">Loading price comparisons...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full">
@@ -92,13 +110,15 @@ const PriceComparison = ({ items }: PriceComparisonProps) => {
           <TableBody>
             {items.map(item => {
               const itemPrices = processedData[item.name] || {};
-              const cheapestPrice = findCheapestPriceForItem(itemPrices);
+              const pricesForThisItem = Object.values(itemPrices).map(p => p.price);
+              const cheapestPrice = pricesForThisItem.length > 0 ? Math.min(...pricesForThisItem) : null;
+
               return (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   {stores.map(store => {
                     const priceInfo = itemPrices[store.id];
-                    const isCheapest = priceInfo && priceInfo.price === cheapestPrice;
+                    const isCheapest = priceInfo && cheapestPrice !== null && priceInfo.price === cheapestPrice;
                     return (
                       <TableCell key={store.id} className="text-right">
                         {priceInfo ? (
@@ -107,7 +127,7 @@ const PriceComparison = ({ items }: PriceComparisonProps) => {
                             <p className="text-xs text-muted-foreground truncate" title={priceInfo.productName}>{priceInfo.productName}</p>
                           </div>
                         ) : (
-                          "-"
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                     );

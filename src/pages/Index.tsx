@@ -4,6 +4,7 @@ import GroceryList from "@/components/GroceryList";
 import PriceComparison from "@/components/PriceComparison";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { GroceryItem } from "@/types";
+import { stores } from "@/lib/data"; // Updated import path
 
 // Placeholder data
 const initialGroceryItems: GroceryItem[] = [
